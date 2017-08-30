@@ -14,7 +14,7 @@ connectionStateMap =
 #                       XML file corresponding to the ssid, security, and
 #                       passphrase (key).
 #
-win32WirelessProfileBuilder = (ssid, security=false, key=null) ->
+win32WirelessProfileBuilder = (ssid, security=false, key=null, hidden=false) ->
   #
   # (1) First, construct the header which specifies the SSID.
   #
@@ -25,8 +25,15 @@ win32WirelessProfileBuilder = (ssid, security=false, key=null) ->
                           <SSID>
                             <hex>#{ssid.hex}</hex>
                             <name>#{ssid.plaintext}</name>
-                          </SSID>
-                        </SSIDConfig>"
+                          </SSID>"
+  #
+  # (1.1) Next, check is hidden is true. and close SSIDConfig tag.
+  #
+
+  if hidden
+    profile_content += "<nonBroadcast>true</nonBroadcast>"
+  
+  profile_content += "</SSIDConfig>"
   #
   # (2) Next, depending on security, fill out the encryption-specific data.
   #
@@ -173,7 +180,9 @@ module.exports =
     # (2) Generate XML content for the provided parameters.
     #
     xmlContent = null
-    if _ap.password.length
+    if _ap.hidden and _ap.password.length
+      xmlContent = win32WirelessProfileBuilder ssid, "wpa2", _ap.password, _ap.hidden
+    else if _ap.password.length
       xmlContent = win32WirelessProfileBuilder ssid, "wpa2", _ap.password
     else
       xmlContent = win32WirelessProfileBuilder ssid
